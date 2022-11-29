@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"os"
@@ -55,6 +56,7 @@ type model struct {
 	annotation     textinput.Model
 	commitMessage  string
 	done           bool
+	err            error
 }
 
 func (m model) Init() tea.Cmd {
@@ -106,8 +108,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "enter":
 			if err := updateVersion(repo, m.newVersion, m.annotation.Value()); err != nil {
-				log.Error().Err(err).Msg("error updating version")
-
+				m.err = err
 			} else {
 				m.done = true
 			}
@@ -130,6 +131,10 @@ func (m model) View() string {
 		return doneStyle.Render(renderString)
 	}
 
+	if m.err != nil {
+		return m.err.Error()
+	}
+
 	return fmt.Sprintf("Current Version: %s\nNew Version: %s\n\nPlease supply an annotation\n%s",
 		m.currentVersion.String(),
 		m.newVersion.String(),
@@ -137,6 +142,7 @@ func (m model) View() string {
 }
 
 func init() {
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Fatal().Err(err).Msg("error getting current working directory")
@@ -160,7 +166,7 @@ var rootCmd = &cobra.Command{
 	Long:  `Commands for interacting with a Git Repo and managing version tags`,
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Fatal().Msg("you need to specify a subcommand")
+		fmt.Println("ERROR: you need to specify a subcommand")
 		os.Exit(1)
 	},
 }
