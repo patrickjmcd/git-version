@@ -66,8 +66,8 @@ func (m model) Init() tea.Cmd {
 func initialModel(newVersion version) model {
 	ti := textinput.New()
 	ti.Focus()
-	ti.CharLimit = 156
-	ti.Width = 20
+	ti.CharLimit = 255
+	ti.Width = 100
 
 	if r, err := git.PlainOpen(path); err != nil {
 		log.Fatal().Err(err).Msg("error opening git repo")
